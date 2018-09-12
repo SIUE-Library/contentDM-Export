@@ -9,7 +9,7 @@ collectionList = getCollectionList(sys.argv)
 
 
 
-def getCollectionList(sys.argv):
+def getCollectionList(self):
 	pattern='value="\/.{1,6}_.{1,16}"'
 	r=requests.get(sys.argv[1], auth=(sys.argv[2], sys.argv[3]));
 	text=re.findall(pattern,r.text)
