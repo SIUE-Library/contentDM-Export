@@ -1,12 +1,21 @@
 import requests
 import re
 import sys
+import time
 
 if len(sys.argv)<4:
 	print("Usage: python3 CDM2CSV.py [collections.carli......exe] [username] [password]")
 	sys.exit(1)
 collectionList = getCollectionList(sys.argv)
+idRange = 0, 0 #Tuple to represent the range of ID to be drawn, where idRange[0] is the start ID and idRange[1] is the end ID
 
+for collection in collectionList:
+	for id in idRange[1] - idRange[0]:
+		url = urlTemplate.format(collection, id)
+		print("Processing: " + collection + " | ID: " + id)
+		req = requests.get(url, alloq_redirects=False)
+		#Request Complete
+		time.sleep(0.1)
 
 
 def getCollectionList(self):
