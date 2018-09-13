@@ -33,11 +33,11 @@ urlTemplate = "http://collections.carli.illinois.edu/utils/ajaxhelper/?CISOROOT=
 
 for collection in collectionList:
 	print(collection)
-#	for id in idRange[1] - idRange[0]:
-#		url = urlTemplate.format(collection, id)
-#		print("Processing: " + collection + " | ID: " + id)
+#	for id in range(82,84):
+#		url = urlTemplate.format(collection, str(id))
+#		print("Processing: " + collection + " | ID: " + str(id))
 #		req = requests.get(url, alloq_redirects=False)
-		#Request Complete
+#		#Request Complete
 #		time.sleep(0.1)
 	
 
