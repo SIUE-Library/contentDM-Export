@@ -1,3 +1,8 @@
+#Project: CDM2CSV
+#Organization: SIUE Lovejoy Library, Digital Initiatives Department
+#Programmers: Jacob Grubb, Dale Auten
+#Contacts: jagrubb@siue.edu, dauten@siue.edu
+#Description: A Python script to help mediate the transfer of library data between ContentDM and Omeka S
 import requests
 import re
 import sys
@@ -48,4 +53,3 @@ for collection in getCollectionList():
 #		#Request Complete
 #		time.sleep(0.1)
 	
-
