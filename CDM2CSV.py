@@ -29,10 +29,18 @@ collectionList = getCollectionList()
 idRange = 0, 0 #Tuple to represent the range of ID to be drawn, where idRange[0] is the start ID and idRange[1] is the end ID
 
 #Below is the template URL for scraping images
-urlTemplate = "http://collections.carli.illinois.edu/utils/ajaxhelper/?CISOROOT={0}&CISOPTR={1}&action=2&DMWIDTH=10000&DMHEIGHT=10000"
+imageTemplate = "http://collections.carli.illinois.edu/utils/ajaxhelper/?CISOROOT={0}&CISOPTR={1}&action=2&DMWIDTH=10000&DMHEIGHT=10000"
+generateTemplate = "https://collections.carli.illinois.edu:8443/cgi-bin/admin/export.exe?CISODB={0}&CISOOP=ascii&CISOMODE=1&CISOPTRLIST="
+exportTemplate= "https://collections.carli.illinois.edu:8443/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE={0}/index/description/export.txt"
 
-for collection in collectionList:
-	print(collection)
+#for collection in collectionList:
+
+for collection in getCollectionList():
+	url=generateTemplate.format(collection)
+	requests.get(url, auth=(sys.argv[2], sys.argv[3]));
+	url=exportTemplate.format(collection)
+	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]));
+	print(r.text[0:100])
 #	for id in range(82,84):
 #		url = urlTemplate.format(collection, str(id))
 #		print("Processing: " + collection + " | ID: " + str(id))
