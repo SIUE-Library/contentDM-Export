@@ -39,25 +39,43 @@ exportTemplate= "https://collections.carli.illinois.edu:8443/cgi-bin/admin/getfi
 
 tsv = []
 
-for collection in collectionList:
-	url=generateTemplate.format(collection)
-	requests.get(url, auth=(sys.argv[2], sys.argv[3]))
-	url=exportTemplate.format(collection)
-	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]))
-	tsv.append(r.text.replace("\t",'","').replace("\n", '"\n"'))
-	#print(r.text[0:90])
-#	for id in range(82,84):
-#		url = urlTemplate.format(collection, str(id))
-#		print("Processing: " + collection + " | ID: " + str(id))
-#		req = requests.get(url, alloq_redirects=False)
-#		#Request Complete
-#		time.sleep(0.1)
-
 counter = 0;
 
-for each in tsv:
-	reader = csv.DictReader(io.StringIO(each))
-	
+fieldmap = []
+file = open("fieldmap", "r")
+for line in file:
+	fieldmap.append( line.replace("\n", "").split("->") )
+for each in fieldmap:
+	print(each)
+
+
+for collection in collectionList:
+	#generate file
+	url=generateTemplate.format(collection)
+	requests.get(url, auth=(sys.argv[2], sys.argv[3]))
+	#download file
+	url=exportTemplate.format(collection)
+	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]))
+
+	#do some text cleaning on the file
+	text="\""+r.text.replace("\t",'","').replace("\n", '"\n"')
+
+	text=text.split("\n")
+
+	for field in fieldmap:
+		text[0]=text[0].replace(field[0], field[1])
+
+	out = ""
+
+	for line in text:
+		out+=line+"\n"
+
+	#convert to json and write
+	reader = csv.DictReader(io.StringIO(out))
+	open("."+str(counter)+".csv", "w").write(out)
 	json_data = json.dumps(list(reader))
 	open("."+str(counter)+".json", "w").write(json_data)
 	counter += 1
+	print(json_data+"\nwaiting...\n")
+	time.sleep(1)
+
