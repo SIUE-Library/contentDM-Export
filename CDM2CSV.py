@@ -3,15 +3,14 @@
 #Programmers: Jacob Grubb, Dale Auten
 #Contacts: jagrubb@siue.edu, dauten@siue.edu
 #Description: A Python script to help mediate the transfer of library data between ContentDM and Omeka S
-import requests
-import re
-import sys
-import time
+import requests, re
+import sys, time
+import csv, io, json
 
 #function uses args as input and returns a list of the collections names in a format like "/sie_meander"
 def getCollectionList():
 	#uses args as info to scrape document.
-	r=requests.get(sys.argv[1], auth=(sys.argv[2], sys.argv[3]));
+	r=requests.get(sys.argv[1], auth=(sys.argv[2], sys.argv[3]))
 	#the data we want is in a drop down box.  This regex matches the content from drop down boxes
 	pattern='value="\/.{1,6}_.{1,16}"'	
 	text=re.findall(pattern,r.text)
@@ -38,18 +37,27 @@ imageTemplate = "http://collections.carli.illinois.edu/utils/ajaxhelper/?CISOROO
 generateTemplate = "https://collections.carli.illinois.edu:8443/cgi-bin/admin/export.exe?CISODB={0}&CISOOP=ascii&CISOMODE=1&CISOPTRLIST="
 exportTemplate= "https://collections.carli.illinois.edu:8443/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE={0}/index/description/export.txt"
 
-#for collection in collectionList:
+tsv = []
 
-for collection in getCollectionList():
+for collection in collectionList:
 	url=generateTemplate.format(collection)
-	requests.get(url, auth=(sys.argv[2], sys.argv[3]));
+	requests.get(url, auth=(sys.argv[2], sys.argv[3]))
 	url=exportTemplate.format(collection)
-	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]));
-	print(r.text[0:100])
+	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]))
+	tsv.append(r.text.replace("\t",'","').replace("\n", '"\n"'))
+	#print(r.text[0:90])
 #	for id in range(82,84):
 #		url = urlTemplate.format(collection, str(id))
 #		print("Processing: " + collection + " | ID: " + str(id))
 #		req = requests.get(url, alloq_redirects=False)
 #		#Request Complete
 #		time.sleep(0.1)
+
+counter = 0;
+
+for each in tsv:
+	reader = csv.DictReader(io.StringIO(each))
 	
+	json_data = json.dumps(list(reader))
+	open("."+str(counter)+".json", "w").write(json_data)
+	counter += 1
