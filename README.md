@@ -28,4 +28,4 @@ A list of Dublin Core Field items may be found at http://dublincore.org/document
 Please verify that all of the dublincore data used in the map matches the properties of the dublin core vocabulary.
 
 
-© 2018 SIUE, Edwardsville, IL 62026
+MIT LICENSE Copyright (c) 2018 SIUE Lovejoy Library
