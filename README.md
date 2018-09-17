@@ -16,10 +16,10 @@ __Please Note: If security is a major concern for your organization, you may wis
 ## Field Map
 Users will also need to create a Field Map.  This is a text file that has a format like contentdmfield->dublincorefield
 
->Title->dcterms:title
->Access Rights->dcterms:accessRights
->Date Accepted->cterms:dateAccepted
->etc->etc:etc 
+>Title->dcterms:title<br>
+Access Rights->dcterms:accessRights<br>
+Date Accepted->cterms:dateAccepted<br>
+etc->etc:etc 
 
 A list of Dublin Core Field items may be found at http://dublincore.org/documents/1999/07/02/dces/
 Please verify that all of the dublincore data used in the map matches the properties of the dublin core vocabulary.
