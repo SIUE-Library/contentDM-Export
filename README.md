@@ -9,16 +9,21 @@ python3 CDM2CSV.py <collections.carli......collections.exe> <username> <password
 ```
 
 Where <collections.carli......collections.exe> is the URL of your collection page on your CONTENTdm dashboard. The <username> and <password> need to be for a contentDM account with access to report generation.
+  
+ _____________ 
 __Please Note: If security is a major concern for your organization, you may wish to contribute to the project, as this project makes use of the [```requests.py```](http://docs.python-requests.org/en/master/) Module, which _May or May not_ be to your own security standards__
 
 ## Field Map
-Users will also need to create a Field Map.  This is a text file that has a format like contentdmfield->dublincorefield: for example
-Content DM Field | Dublin Core Field
------------------|-------------------
-Title|dcterms:title
-Access Rights|dcterms:accessRights
-Date Accepte|dcterms:dateAccepted
-etc|etc:etc
+Users will also need to create a Field Map.  This is a text file that has a format like contentdmfield->dublincorefield
+
+
+| Content DM Field | Dublin Core Field |
+| -|- |
+| Title | dcterms:title |
+| Access Rights | dcterms:accessRights |
+| Date Accepted | cterms:dateAccepted |
+| etc | etc:etc |
+
 A list of Dublin Core Field items may be found at http://dublincore.org/documents/1999/07/02/dces/
 Please verify that all of the dublincore data used in the map matches the properties of the dublin core vocabulary.
 
