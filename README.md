@@ -1,16 +1,26 @@
-# contentDM-Export
-(Software and therefore README incomplete)
-Script designed to export collections from ContentDM, into a form that can be uploaded to Omeka
+# ContentDM-Export
+_(Software incomplete)_
+
+Script designed to export collections from [ContentDM](https://www.oclc.org/en/contentdm.html) content management platform, into a form that can be uploaded the [Omeka S](https://omeka.org/s/) content management platform
 
 Usage:
->python3 CDM2CSV.py \<collections.carli......collections.exe\> \<username\> \<password\>
+```
+python3 CDM2CSV.py <collections.carli......collections.exe> <username> <password>
+```
 
-Where <collections.carli......collections.exe> is the URL of your collection page on your CONTENTdm dashboard
+Where <collections.carli......collections.exe> is the URL of your collection page on your CONTENTdm dashboard. The <username> and <password> need to be for a contentDM account with access to report generation.
+__Please Note: If security is a major concern for your organization, you may wish to contribute to the project, as this project makes use of the [```requests.py```](http://docs.python-requests.org/en/master/) Module, which _May or May not_ be to your own security standards__
 
-You will also need to create a Field Map.  This is a text file that has a format like contentdmfield->dublincorefield: for example
-Title->dcterms:title
-Access Rights->dcterms:accessRights
-Date Accepted->dcterms:dateAccepted
-etc->etc:etc
-For all fields in all of your contentDM collections.  A sample Field Map file is included that may work for some contentDM setups.
-Verify that all of the dublincore data used in the map matches the properties of the dublin core vocabulary.
+## Field Map
+Users will also need to create a Field Map.  This is a text file that has a format like contentdmfield->dublincorefield: for example
+Content DM Field | Dublin Core Field
+-----------------|-------------------
+Title|dcterms:title
+Access Rights|dcterms:accessRights
+Date Accepte|dcterms:dateAccepted
+etc|etc:etc
+A list of Dublin Core Field items may be found at http://dublincore.org/documents/1999/07/02/dces/
+Please verify that all of the dublincore data used in the map matches the properties of the dublin core vocabulary.
+
+
+© 2018 SIUE, Edwardsville, IL 62026
