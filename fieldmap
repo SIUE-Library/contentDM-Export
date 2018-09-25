@@ -1,5 +1,5 @@
-Title->dcterms:title
-Description->dcterms:description
-Subjects->dcterms:subject
-Rights->dcterms:rights
-Language->dcterms:language
+Title->dcterms:title->1
+Description->dcterms:description->4
+Rights->dcterms:rights->15
+Language->dcterms:language->12
+Type->dcterms:type->8
