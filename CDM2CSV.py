@@ -25,7 +25,20 @@ def getCollectionList():
 
 #P: Json Object representing output of a carli collection
 #Q: Json-L Object representing what omeka API expects to be passed
-def carliToOmeka(json_object):
+def carliToOmeka(json_object, fieldmap):
+	#for every json object (aka every item in the collection)
+	for j in json.loads(json_data):
+		if j["CONTENTdm file name"][-3:] == "cpd":
+			current = {}
+			#for every aspect (title description etc) in that object
+			for key in j.keys():
+				for field in fieldmap:
+					if field[0] == key:
+						current[field[1]] = [ {} ]
+						current[field[1]][0]["type"] = "literal"
+						current[field[1]][0]["@value"] = j[key]
+						current[field[1]][0]["property_id"] = field[2]
+			r = requests.post("http://146.163.157.78/omeka-s/api/items", headers={"Content-type":"application/json"}, json=current,  params={"key_identity":"NuXE6YOtL3tS5T1iNe5MZJdo3hzvgcXU", "key_credential":"Hi4KqIqa4FBFKJcRG3YgtYkP0mxwIdbB"} )
 
 
 #checks usage
@@ -53,7 +66,6 @@ for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
 
 csv.field_size_limit(sys.maxsize)
-collectionList=collectionList[1:3]
 for collection in collectionList:
 	#generate file
 	url=generateTemplate.format(collection)
@@ -84,12 +96,5 @@ for collection in collectionList:
 	#print(json_data+"\nwaiting...\n")
 	open(".last.csv", "w").write(json_data)
 	time.sleep(.25)
-
-	#for every json object (aka every item in the collection)
-	for j in json.loads(json_data):
-		#for every aspect (title description etc) in that object
-		for key in j.keys():
-			for field in fieldmap:
-				if field[0] == key:
-					print(field[0]+"->"+field[1]+" for "+j[key][0:20]+"...")
+	carliToOmeka(json_data, fieldmap)
 
