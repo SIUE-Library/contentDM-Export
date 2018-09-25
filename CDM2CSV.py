@@ -22,6 +22,12 @@ def getCollectionList():
 	#after all data is added to collection
 	return collection
 
+
+#P: Json Object representing output of a carli collection
+#Q: Json-L Object representing what omeka API expects to be passed
+def carliToOmeka(json_object):
+
+
 #checks usage
 #TODO: use regex to verify integrity of data
 if len(sys.argv)<4:
@@ -45,10 +51,9 @@ fieldmap = []
 file = open("fieldmap", "r")
 for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
-for each in fieldmap:
-	print(each)
 
-
+csv.field_size_limit(sys.maxsize)
+collectionList=collectionList[1:3]
 for collection in collectionList:
 	#generate file
 	url=generateTemplate.format(collection)
@@ -57,13 +62,14 @@ for collection in collectionList:
 	url=exportTemplate.format(collection)
 	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]))
 
-	#do some text cleaning on the file
-	text="\""+r.text.replace("\t",'","').replace("\n", '"\n"')
+	#do some text cleaning on the file to replace tabs with commas and wrap fields with quotes
+	text=r.text
 
 	text=text.split("\n")
 
+	#update any fieldnames that were aliased in the fieldmap
 	for field in fieldmap:
-		text[0]=text[0].replace(field[0], field[1])
+		text[0]=text[0].replace('"'+field[0]+'"', '"'+field[1]+'"')
 
 	out = ""
 
@@ -71,11 +77,19 @@ for collection in collectionList:
 		out+=line+"\n"
 
 	#convert to json and write
-	reader = csv.DictReader(io.StringIO(out))
 	open("."+str(counter)+".csv", "w").write(out)
-	json_data = json.dumps(list(reader))
+	json_data = json.dumps(list(csv.DictReader(io.StringIO(out), delimiter="\t")), indent=4, sort_keys=True)
 	open("."+str(counter)+".json", "w").write(json_data)
 	counter += 1
-	print(json_data+"\nwaiting...\n")
-	time.sleep(1)
+	#print(json_data+"\nwaiting...\n")
+	open(".last.csv", "w").write(json_data)
+	time.sleep(.25)
+
+	#for every json object (aka every item in the collection)
+	for j in json.loads(json_data):
+		#for every aspect (title description etc) in that object
+		for key in j.keys():
+			for field in fieldmap:
+				if field[0] == key:
+					print(field[0]+"->"+field[1]+" for "+j[key][0:20]+"...")
 
