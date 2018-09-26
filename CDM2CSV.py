@@ -8,9 +8,9 @@ import sys, time
 import csv, io, json
 
 #function uses args as input and returns a list of the collections names in a format like "/sie_meander"
-def getCollectionList():
+def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword):
 	#uses args as info to scrape document.
-	r=requests.get(sys.argv[1], auth=(sys.argv[2], sys.argv[3]))
+	r=requests.get(contentDMcollection, auth=(contentDMusername, contentDMpassword))
 	#the data we want is in a drop down box.  This regex matches the content from drop down boxes
 	pattern='value="\/.{1,6}_.{1,16}"'	
 	text=re.findall(pattern,r.text)
@@ -40,21 +40,26 @@ def carliToOmeka(json_object, fieldmap):
 						current[field[1]][0]["property_id"] = field[2]
 			r = requests.post("http://146.163.157.78/omeka-s/api/items", headers={"Content-type":"application/json"}, json=current,  params={"key_identity":"NuXE6YOtL3tS5T1iNe5MZJdo3hzvgcXU", "key_credential":"Hi4KqIqa4FBFKJcRG3YgtYkP0mxwIdbB"} )
 
+#Below is the template URL for scraping images
+options=open("config.ini", "r").read().split("\n")
+for line in range(0, len(options)):
+	options[line] = "=".join(options[line].split("=")[1:])
+	print(options[line])
+contentDMusername=options[0]
+contentDMpassword=options[1]
+contentDMcollection=options[2]
+key_identity=options[3]
+key_credential=options[4]
+omekaURL=options[5]
+imageTemplate = options[6]
+generateTemplate = options[7]
+exportTemplate= options[8]
 
-#checks usage
-#TODO: use regex to verify integrity of data
-if len(sys.argv)<4:
-	print("Usage: python3 CDM2CSV.py [collections.carli......collections.exe] [username] [password]")
-	sys.exit(1)
 
 #EXECUTION BEGIN
-collectionList = getCollectionList()
+collectionList = getCollectionList(contentDMcollection, contentDMusername, contentDMpassword)
 idRange = 0, 0 #Tuple to represent the range of ID to be drawn, where idRange[0] is the start ID and idRange[1] is the end ID
 
-#Below is the template URL for scraping images
-imageTemplate = "http://collections.carli.illinois.edu/utils/ajaxhelper/?CISOROOT={0}&CISOPTR={1}&action=2&DMWIDTH=10000&DMHEIGHT=10000"
-generateTemplate = "https://collections.carli.illinois.edu:8443/cgi-bin/admin/export.exe?CISODB={0}&CISOOP=ascii&CISOMODE=1&CISOPTRLIST="
-exportTemplate= "https://collections.carli.illinois.edu:8443/cgi-bin/admin/getfile.exe?CISOMODE=1&CISOFILE={0}/index/description/export.txt"
 
 tsv = []
 
@@ -69,10 +74,10 @@ csv.field_size_limit(sys.maxsize)
 for collection in collectionList:
 	#generate file
 	url=generateTemplate.format(collection)
-	requests.get(url, auth=(sys.argv[2], sys.argv[3]))
+	requests.get(url, auth=(contentDMusername, contentDMpassword))
 	#download file
 	url=exportTemplate.format(collection)
-	r=requests.get(url, auth=(sys.argv[2], sys.argv[3]))
+	r=requests.get(url, auth=(contentDMusername, contentDMpassword))
 
 	#do some text cleaning on the file to replace tabs with commas and wrap fields with quotes
 	text=r.text
