@@ -1,12 +1,12 @@
 #Project: CDM2CSV
 #Organization: SIUE Lovejoy Library, Digital Initiatives Department
-#Programmers: Jacob Grubb, Dale Auten
-#Contacts: jagrubb@siue.edu, dauten@siue.edu
+#Programmers: Dale Auten, Jacob Grubb
+#Contacts: dauten@siue.edu, jagrubb@siue.edu
 #Description: A Python script to help mediate the transfer of library data between ContentDM and Omeka S
 import requests, re
 import sys, time
 import csv, io, json
-
+import subprocess
 #function uses args as input and returns a list of the collections names in a format like "/sie_meander"
 def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword):
 	#uses args as info to scrape document.
@@ -25,8 +25,9 @@ def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword)
 
 #P: Json Object representing output of a carli collection
 #Q: Json-L Object representing what omeka API expects to be passed
-def carliToOmeka(json_object, fieldmap):
+def carliToOmeka(json_object, fieldmap, params):
 	#for every json object (aka every item in the collection)
+	q=[]
 	for j in json.loads(json_data):
 		if j["CONTENTdm file name"][-3:] == "cpd":
 			current = {}
@@ -38,13 +39,49 @@ def carliToOmeka(json_object, fieldmap):
 						current[field[1]][0]["type"] = "literal"
 						current[field[1]][0]["@value"] = j[key]
 						current[field[1]][0]["property_id"] = field[2]
-			r = requests.post("http://146.163.157.78/omeka-s/api/items", headers={"Content-type":"application/json"}, json=current,  params={"key_identity":"NuXE6YOtL3tS5T1iNe5MZJdo3hzvgcXU", "key_credential":"Hi4KqIqa4FBFKJcRG3YgtYkP0mxwIdbB"} )
+			r = requests.post("http://146.163.157.78/omeka-s/api/items", headers={"Content-type":"application/json"}, json=current,  params=params )
+			omekaNumber = json.loads(r.text)["o:id"]
+			for media in q:
+				current = {}
+				data = {
+				    "o:ingester": "upload", 
+				    "file_index": "0", 
+				    "o:item": {"o:id": omekaNumber},
+				}
+				for key in media.keys():
+					for field in fieldmap:
+						if field[0] == key:
+							data[field[1]] = [ {} ]
+							data[field[1]][0]["type"] = "literal"
+							data[field[1]][0]["@value"] = media[key]
+							data[field[1]][0]["property_id"] = field[2]
+				files = [
+				     ('data', (None, json.dumps(data), 'application/json')),
+				     ('file[0]', (media["Title"], open('./contentdm_files'+media["Title"], 'rb'), 'image/jpg'))
+				]
+				response = requests.post('http://146.163.157.78/omeka-s/api/media', params=params, files=files)
+				print(response)
+				print(response.url)
+				print(response.text)
+
+
+
+
+		#else it is media
+		elif j["CONTENTdm file name"][-3:] == "jpg":
+			#download image with title as filename into hidden folder
+			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
+			#add this item to our list of things to add.
+			#right now we don't know what item this goes to, we save them for when we do
+			q.append(j)
+			
+
 
 #Below is the template URL for scraping images
 options=open("config.ini", "r").read().split("\n")
 for line in range(0, len(options)):
 	options[line] = "=".join(options[line].split("=")[1:])
-	print(options[line])
+
 contentDMusername=options[0]
 contentDMpassword=options[1]
 contentDMcollection=options[2]
@@ -71,7 +108,7 @@ for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
 
 csv.field_size_limit(sys.maxsize)
-for collection in collectionList:
+for collection in collectionList[2:3]:
 	#generate file
 	url=generateTemplate.format(collection)
 	requests.get(url, auth=(contentDMusername, contentDMpassword))
@@ -98,8 +135,7 @@ for collection in collectionList:
 	json_data = json.dumps(list(csv.DictReader(io.StringIO(out), delimiter="\t")), indent=4, sort_keys=True)
 	open("."+str(counter)+".json", "w").write(json_data)
 	counter += 1
-	#print(json_data+"\nwaiting...\n")
 	open(".last.csv", "w").write(json_data)
 	time.sleep(.25)
-	carliToOmeka(json_data, fieldmap)
+	carliToOmeka(json_data, fieldmap, {"key_identity":key_identity, "key_credential":key_credential} )
 

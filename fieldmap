@@ -3,3 +3,21 @@ Description->dcterms:description->4
 Rights->dcterms:rights->15
 Language->dcterms:language->12
 Type->dcterms:type->8
+Transcription->dcterms:description->4
+Transcript->dcterms:description->4
+Additional Information->dcterms:description->4
+Additional information->dcterms:description->4
+Air->dcterms:description->4
+Also known as->dcterms:alternative->17
+Alternate building names->dcterms:description->4
+Alternate creator name->dcterms:description->4
+Alternate title->dcterms:alternative->17
+Alternate Title->dcterms:alternative->17
+Architect(s)->dcterms:contributor->6
+Architectural element->dcterms:subject->3
+Arranger(s)->dcterms:contributor->6
+Artist->dcterms:creator->2
+Associate editor(s)->dcterms:creator->2
+Audience->dcterms:audience->16
+Author->dcterms:creator->2
+Author(s)->dcterms:creator->2
