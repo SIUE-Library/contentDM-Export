@@ -28,6 +28,9 @@ def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword)
 def carliToOmeka(json_object, fieldmap, params):
 	#for every json object (aka every item in the collection)
 	q=[]
+	haveSeen = []
+	imageFormat = ["jpg","png","gif","jp2"]
+	pdfPage = "collections.carli.illinois.edu/utils/getdownloaditem/collection/{0}/id/{1}/filename/584.pdfpage/mapsto/pdf"
 	for j in json.loads(json_data):
 		if j["CONTENTdm file name"][-3:] == "cpd":
 			current = {}
@@ -60,21 +63,24 @@ def carliToOmeka(json_object, fieldmap, params):
 				     ('file[0]', (media["Title"], open('./contentdm_files'+media["Title"], 'rb'), 'image/jpg'))
 				]
 				response = requests.post('http://146.163.157.78/omeka-s/api/media', params=params, files=files)
-				print(response)
-				print(response.url)
-				print(response.text)
+
+			q=[]
 
 
 
 
 		#else it is media
-		elif j["CONTENTdm file name"][-3:] == "jpg":
+		elif j["CONTENTdm file name"][-3:] in imageFormat:
 			#download image with title as filename into hidden folder
 			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
 			#add this item to our list of things to add.
 			#right now we don't know what item this goes to, we save them for when we do
 			q.append(j)
-			
+		else:
+			if j["CONTENTdm file name"].split(".")[-1] not in haveSeen:
+				print("."+str(j["CONTENTdm file name"].split(".")[-1]))
+				print("\t("+str(j)+")")
+				haveSeen.append(j["CONTENTdm file name"].split(".")[-1])		
 
 
 #Below is the template URL for scraping images
@@ -108,7 +114,7 @@ for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
 
 csv.field_size_limit(sys.maxsize)
-for collection in collectionList[2:3]:
+for collection in collectionList:
 	#generate file
 	url=generateTemplate.format(collection)
 	requests.get(url, auth=(contentDMusername, contentDMpassword))
