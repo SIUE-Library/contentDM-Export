@@ -53,7 +53,7 @@ def carliToOmeka(json_object, fieldmap, params):
 				source = requests.get(url).text
 				p=re.compile("/utils/.*/mapsto/pdf")
 				pdfUrl = "http://collections.carli.illinois.edu" + p.findall(source)[0]
-				subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"], pdfUrl ])
+				subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"].replace(".","")+".pdf", pdfUrl ])
 				current = {}
 				data = {
 				    "o:ingester": "upload", 
@@ -62,10 +62,12 @@ def carliToOmeka(json_object, fieldmap, params):
 				}
 				files = [
 				     ('data', (None, json.dumps(data), 'application/json')),
-				     ('file[0]', (j["Title"], open('./contentdm_files/'+j["Title"], 'rb'), 'application/pdf'))
+				     ('file[0]', (j["Title"].replace(".","")+".pdf", open('./contentdm_files/'+j["Title"].replace(".","")+".pdf", 'rb'), 'application/pdf'))
 				]
 				response = requests.post('http://146.163.157.78/omeka-s/api/media', params=params, files=files)
 				print("Response from server for our POST:\n\t"+str(response))
+				if "500" in str(response):
+					print("\t"+str(files)+str(params))
 
 
 
