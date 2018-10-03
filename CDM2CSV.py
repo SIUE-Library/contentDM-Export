@@ -29,6 +29,10 @@ def carliToOmeka(json_object, fieldmap, params):
 	#for every json object (aka every item in the collection)
 	q=[]
 	haveSeen = []
+
+	for f in fieldmap:
+		if len(f) < 4:
+			print(f)
 	imageFormat = ["jpg","png","gif","jp2"]
 	pdfPage = "collections.carli.illinois.edu/utils/getdownloaditem/collection/{0}/id/{1}/filename/584.pdfpage/mapsto/pdf"
 	for j in json.loads(json_data):
@@ -44,6 +48,27 @@ def carliToOmeka(json_object, fieldmap, params):
 						current[field[1]][0]["property_id"] = field[2]
 			r = requests.post("http://146.163.157.78/omeka-s/api/items", headers={"Content-type":"application/json"}, json=current,  params=params )
 			omekaNumber = json.loads(r.text)["o:id"]
+			if j["CONTENTdm file path"][-3:] == "pdf":
+				url = j["Reference URL"]
+				source = requests.get(url).text
+				p=re.compile("/utils/.*/mapsto/pdf")
+				pdfUrl = "http://collections.carli.illinois.edu" + p.findall(source)[0]
+				subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"], pdfUrl ])
+				current = {}
+				data = {
+				    "o:ingester": "upload", 
+				    "file_index": "0", 
+				    "o:item": {"o:id": omekaNumber},
+				}
+				files = [
+				     ('data', (None, json.dumps(data), 'application/json')),
+				     ('file[0]', (j["Title"], open('./contentdm_files/'+j["Title"], 'rb'), 'application/pdf'))
+				]
+				response = requests.post('http://146.163.157.78/omeka-s/api/media', params=params, files=files)
+				print("Response from server for our POST:\n\t"+str(response))
+
+
+
 			for media in q:
 				current = {}
 				data = {
@@ -60,10 +85,10 @@ def carliToOmeka(json_object, fieldmap, params):
 							data[field[1]][0]["property_id"] = field[2]
 				files = [
 				     ('data', (None, json.dumps(data), 'application/json')),
-				     ('file[0]', (media["Title"], open('./contentdm_files'+media["Title"], 'rb'), 'image/jpg'))
+				     ('file[0]', (media["Title"], open('./contentdm_files/'+media["Title"], 'rb'), 'image/jpg'))
 				]
 				response = requests.post('http://146.163.157.78/omeka-s/api/media', params=params, files=files)
-
+				print("Response from server for our POST:\n\t"+str(response))
 			q=[]
 
 
@@ -72,10 +97,11 @@ def carliToOmeka(json_object, fieldmap, params):
 		#else it is media
 		elif j["CONTENTdm file name"][-3:] in imageFormat:
 			#download image with title as filename into hidden folder
-			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
+			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
 			#add this item to our list of things to add.
 			#right now we don't know what item this goes to, we save them for when we do
 			q.append(j)
+
 		else:
 			if j["CONTENTdm file name"].split(".")[-1] not in haveSeen:
 				print("."+str(j["CONTENTdm file name"].split(".")[-1]))
@@ -112,6 +138,13 @@ fieldmap = []
 file = open("fieldmap", "r")
 for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
+metadata = open(".dbcmap", "r").read().split("\n")
+for f in fieldmap:
+	for line in metadata:
+		if f[1] == line.split("\t")[0]:
+			f.append(line.split("\t")[1])
+			f.append(line.split("\t")[2])		
+
 
 csv.field_size_limit(sys.maxsize)
 for collection in collectionList:
