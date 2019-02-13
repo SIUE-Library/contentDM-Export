@@ -9,8 +9,10 @@ import csv, io, json
 import subprocess
 #function uses args as input and returns a list of the collections names in a format like "/sie_meander"
 def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword):
+	print("Beginning collection reading")
 	#uses args as info to scrape document.
 	r=requests.get(contentDMcollection, auth=(contentDMusername, contentDMpassword))
+	print(r.text)
 	#the data we want is in a drop down box.  This regex matches the content from drop down boxes
 	pattern='value="\/.{1,6}_.{1,16}"'	
 	text=re.findall(pattern,r.text)
@@ -18,6 +20,7 @@ def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword)
 
 	#the regex includes 'value="' and '"' in the returned string so take substring to cut those bits off
 	for node in text:
+		print("Got: "+node[7:-1])
 		collection.append(node[7:-1])
 	#after all data is added to collection
 	return collection
@@ -36,7 +39,7 @@ def carliToOmeka(json_object, fieldmap, params):
 	imageFormat = ["jpg","png","gif","jp2"]
 	pdfPage = "collections.carli.illinois.edu/utils/getdownloaditem/collection/{0}/id/{1}/filename/584.pdfpage/mapsto/pdf"
 	for j in json.loads(json_data):
-		if j["CONTENTdm file name"][-3:] == "cpd":
+		if "CONTENTdm file name" in j.keys() and j["CONTENTdm file name"][-3:] == "cpd":
 			current = {}
 			#for every aspect (title description etc) in that object
 			for key in j.keys():
@@ -97,7 +100,7 @@ def carliToOmeka(json_object, fieldmap, params):
 
 
 		#else it is media
-		elif j["CONTENTdm file name"][-3:] in imageFormat:
+		elif "CONTENTdm file name" in j.keys() and j["CONTENTdm file name"][-3:] in imageFormat:
 			#download image with title as filename into hidden folder
 			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
 			#add this item to our list of things to add.
@@ -105,7 +108,7 @@ def carliToOmeka(json_object, fieldmap, params):
 			q.append(j)
 
 		else:
-			if j["CONTENTdm file name"].split(".")[-1] not in haveSeen:
+			if "CONTENTdm file name" in j.keys() and j["CONTENTdm file name"].split(".")[-1] not in haveSeen:
 				print("."+str(j["CONTENTdm file name"].split(".")[-1]))
 				print("\t("+str(j)+")")
 				haveSeen.append(j["CONTENTdm file name"].split(".")[-1])		
@@ -140,13 +143,16 @@ fieldmap = []
 file = open("fieldmap", "r")
 for line in file:
 	fieldmap.append( line.replace("\n", "").split("->") )
+
+'''
 metadata = open(".dbcmap", "r").read().split("\n")
+
 for f in fieldmap:
 	for line in metadata:
 		if f[1] == line.split("\t")[0]:
 			f.append(line.split("\t")[1])
 			f.append(line.split("\t")[2])		
-
+'''
 
 csv.field_size_limit(sys.maxsize)
 for collection in collectionList:
