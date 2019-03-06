@@ -6,25 +6,25 @@
 import requests, re
 import sys, time
 import csv, io, json
-import subprocess
 #function uses args as input and returns a list of the collections names in a format like "/sie_meander"
 def getCollectionList(contentDMcollection, contentDMusername, contentDMpassword):
 	print("Beginning collection reading")
 	#uses args as info to scrape document.
 	r=requests.get(contentDMcollection, auth=(contentDMusername, contentDMpassword))
-	print(r.text)
+	#print(r.text)
 	#the data we want is in a drop down box.  This regex matches the content from drop down boxes
-	pattern='value="\/.{1,6}_.{1,16}"'	
+	pattern='value="\/.{1,6}_.{1,16}"'
 	text=re.findall(pattern,r.text)
 	collection=[]
 
 	#the regex includes 'value="' and '"' in the returned string so take substring to cut those bits off
 	for node in text:
-		print("Got: "+node[7:-1])
+	#	print("Got: "+node[7:-1])
 		collection.append(node[7:-1])
 	#after all data is added to collection
+	print("collection:")
+	print(collection)
 	return collection
-
 
 #P: Json Object representing output of a carli collection
 #Q: Json-L Object representing what omeka API expects to be passed
@@ -55,12 +55,19 @@ def carliToOmeka(json_object, fieldmap, params):
 				url = j["Reference URL"]
 				source = requests.get(url).text
 				p=re.compile("/utils/.*/mapsto/pdf")
+				print("PDF has length of "+str(len(p.findall(source))))
+				print("that is from\n\n\n"+source)
 				pdfUrl = "http://collections.carli.illinois.edu" + p.findall(source)[0]
-				subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"].replace(".","")+".pdf", pdfUrl ])
+				try:
+					response = requests.get(pdfUrl)
+					with open('./contentdm_files/'+j["Title"].replace(".","")+'.pdf', 'wb') as f:
+						f.write(response.content)
+				except Exception as e:
+					raise
 				current = {}
 				data = {
-				    "o:ingester": "upload", 
-				    "file_index": "0", 
+				    "o:ingester": "upload",
+				    "file_index": "0",
 				    "o:item": {"o:id": omekaNumber},
 				}
 				files = [
@@ -77,8 +84,8 @@ def carliToOmeka(json_object, fieldmap, params):
 			for media in q:
 				current = {}
 				data = {
-				    "o:ingester": "upload", 
-				    "file_index": "0", 
+				    "o:ingester": "upload",
+				    "file_index": "0",
 				    "o:item": {"o:id": omekaNumber},
 				}
 				for key in media.keys():
@@ -102,7 +109,12 @@ def carliToOmeka(json_object, fieldmap, params):
 		#else it is media
 		elif "CONTENTdm file name" in j.keys() and j["CONTENTdm file name"][-3:] in imageFormat:
 			#download image with title as filename into hidden folder
-			subprocess.check_output(["wget", "-q", "--output-document=./contentdm_files/"+j["Title"], imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ) ])
+			try:
+				response = requests.get(imageTemplate.format(j["CONTENTdm file path"].split("/")[1], j["CONTENTdm number"] ))
+				with open('./contentdm_files/'+j["Title"], 'wb') as f:
+					f.write(response.content)
+			except Exception as e:
+				raise
 			#add this item to our list of things to add.
 			#right now we don't know what item this goes to, we save them for when we do
 			q.append(j)
@@ -111,7 +123,7 @@ def carliToOmeka(json_object, fieldmap, params):
 			if "CONTENTdm file name" in j.keys() and j["CONTENTdm file name"].split(".")[-1] not in haveSeen:
 				print("."+str(j["CONTENTdm file name"].split(".")[-1]))
 				print("\t("+str(j)+")")
-				haveSeen.append(j["CONTENTdm file name"].split(".")[-1])		
+				haveSeen.append(j["CONTENTdm file name"].split(".")[-1])
 
 
 #Below is the template URL for scraping images
@@ -151,14 +163,15 @@ for f in fieldmap:
 	for line in metadata:
 		if f[1] == line.split("\t")[0]:
 			f.append(line.split("\t")[1])
-			f.append(line.split("\t")[2])		
+			f.append(line.split("\t")[2])
 '''
 
 csv.field_size_limit(sys.maxsize)
 for collection in collectionList:
 	#generate file
 	url=generateTemplate.format(collection)
-	requests.get(url, auth=(contentDMusername, contentDMpassword))
+	r=requests.get(url, auth=(contentDMusername, contentDMpassword))
+
 	#download file
 	url=exportTemplate.format(collection)
 	r=requests.get(url, auth=(contentDMusername, contentDMpassword))
@@ -183,6 +196,5 @@ for collection in collectionList:
 	open("."+str(counter)+".json", "w").write(json_data)
 	counter += 1
 	open(".last.csv", "w").write(json_data)
-	time.sleep(.25)
 	carliToOmeka(json_data, fieldmap, {"key_identity":key_identity, "key_credential":key_credential} )
-
+	print("===="+collection+" complete====")
